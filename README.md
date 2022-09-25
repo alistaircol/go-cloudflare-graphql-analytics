@@ -97,9 +97,7 @@ rm request.json
 </details>
 
 <details>
-<summary>
-`stats.json`
-</summary>
+<summary>stats.json</summary>
 
 ```json
 {
@@ -838,9 +836,7 @@ export CLOUDFLARE_TOKEN="token"
 ```
 
 <details>
-<summary>
-`day.json`
-</summary>
+<summary>day.json</summary>
 
 ```json
 {
@@ -1125,9 +1121,7 @@ export CLOUDFLARE_TOKEN="token"
 </details>
 
 <details>
-<summary>
-`week.json`
-</summary>
+<summary>week.json</summary>
 
 ```json
 {
@@ -1225,9 +1219,7 @@ export CLOUDFLARE_TOKEN="token"
 </details>
 
 <details>
-<summary>
-`month.json`
-</summary>
+<summary>month.json</summary>
 
 ```json
 {
