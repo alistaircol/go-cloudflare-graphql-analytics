@@ -804,6 +804,8 @@ rm request.json
 
 </details>
 
+I was going to use `bash` runtime in Lambda with a `jq` layer, but `aws-cli` is not available and making a layer for `aws-cli` with a static binary (like the `jq` from GitHub release, which I had working), or a dynamic binary with its dependencies for this was way beyond my abilities, so I'm using the `go` runtime, since I don't like `python` or `node`.
+
 ## Go
 
 Use [`taskfile`](https://taskfile.dev/) to build (and eventually upload binaries to lambda executables):
