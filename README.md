@@ -792,8 +792,6 @@ rm request.json
 
 </details>
 
-`stats.json`:
-
 Some `go` apps which will eventually run in [AWS Lambda](https://aws.amazon.com/lambda/) on a schedule with [Amazon EventBridge](https://aws.amazon.com/eventbridge/) and put analytics payloads in an [S3](https://aws.amazon.com/s3/) bucket for use in [chartjs](https://www.chartjs.org/).
 
 There are three executables:
