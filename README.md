@@ -1,5 +1,17 @@
 > :warning: **Work in progress**
 
+# Overview
+
+Some `go` apps which will eventually run in [AWS Lambda](https://aws.amazon.com/lambda/) on a schedule with [Amazon EventBridge](https://aws.amazon.com/eventbridge/) and put analytics payloads in an [S3](https://aws.amazon.com/s3/) bucket for use in [chartjs](https://www.chartjs.org/).
+
+There are three executables:
+
+* `bin/analytics1d` - from the last UTC hour, get the previous 24 hours `requests` and `uniques`
+* `bin/analytics1w` - from the last UTC day, get the previous 7 days `requests` and `uniques`
+* `bin/analytics1m` - from the last UTC day, get the previous 7 days `requests` and `uniques`
+
+## MVP
+
 <details>
 <summary>A bash script to get day/week/month analytics from Coudflare's graphql analytics api and example output</summary>
 
@@ -792,13 +804,7 @@ rm request.json
 
 </details>
 
-Some `go` apps which will eventually run in [AWS Lambda](https://aws.amazon.com/lambda/) on a schedule with [Amazon EventBridge](https://aws.amazon.com/eventbridge/) and put analytics payloads in an [S3](https://aws.amazon.com/s3/) bucket for use in [chartjs](https://www.chartjs.org/).
-
-There are three executables:
-
-* `bin/analytics1d` - from the last UTC hour, get the previous 24 hours `requests` and `uniques`
-* `bin/analytics1w` - from the last UTC day, get the previous 7 days `requests` and `uniques`
-* `bin/analytics1m` - from the last UTC day, get the previous 7 days `requests` and `uniques`
+## Go
 
 Use [`taskfile`](https://taskfile.dev/) to build (and eventually upload binaries to lambda executables):
 
