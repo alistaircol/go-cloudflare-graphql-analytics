@@ -2,3 +2,5 @@
 bin/**
 !bin/.gitkeep
 a.sh
+**terraform**
+!terraform.tfvars.example
