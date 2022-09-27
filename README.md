@@ -1,14 +1,16 @@
 > :warning: **Work in progress**
 
+![Chart](https://raw.githubusercontent.com/alistaircol/go-cloudflare-graphql-analytics/main/chart.png)
+
 # Overview
 
 Some `go` apps which will eventually run in [AWS Lambda](https://aws.amazon.com/lambda/) on a schedule with [Amazon EventBridge](https://aws.amazon.com/eventbridge/) and put analytics payloads in an [S3](https://aws.amazon.com/s3/) bucket for use in [chartjs](https://www.chartjs.org/).
 
-There are three executables:
+There will be three binaries and lambda functions:
 
-* `bin/analytics1d` - from the last UTC hour, get the previous 24 hours `requests` and `uniques`
-* `bin/analytics1w` - from the last UTC day, get the previous 7 days `requests` and `uniques`
-* `bin/analytics1m` - from the last UTC day, get the previous 7 days `requests` and `uniques`
+* `analytics1d` - from the last UTC hour, get the previous 24 hours `requests` and `uniques`
+* `analytics1w` - from the last UTC day, get the previous 7 days `requests` and `uniques`
+* `analytics1m` - from the last UTC day, get the previous 7 days `requests` and `uniques`
 
 ## MVP
 
@@ -808,37 +810,36 @@ I was going to use `bash` runtime in Lambda with a `jq` layer, but `aws-cli` is 
 
 ## Go
 
-Use [`taskfile`](https://taskfile.dev/) to build (and eventually upload binaries to lambda executables):
+Use [`taskfile`](https://taskfile.dev/) to build binaries:
 
 ```
+# to build binaries for your OS
 task
+
+# to build binaries for your Amazon Linux for running in Lambda
+# this will also zip them for upload
+task dist
 ```
 
-The following executables will require the following environment variables (and possibly some AWS credentials to upload the JSON from graphql API to S3):
-
-```dotenv
-CLOUDFLARE_EMAIL=
-CLOUDFLARE_TOKEN=
-CLOUDFLARE_ZONE=
-```
+The following executables will look for credentials and configuration in the environment variables.
 
 For testing purposes you could use:
 
 `test.sh`:
 
 ```bash
-export CLOUDFLARE_ZONE="zone"
-export CLOUDFLARE_EMAIL="email"
-export CLOUDFLARE_TOKEN="token"
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+export AWS_REGION=eu-west-2
+export AWS_S3_BUCKET=
 
-# iteration one: test.sh > day.json
-./bin/analytics1d | jq .
+export CLOUDFLARE_ZONE=
+export CLOUDFLARE_EMAIL=
+export CLOUDFLARE_TOKEN=
 
-# iteration two: test.sh > week.json
-./bin/analytics1w | jq .
-
-# iteration three: test.sh > month.json
-./bin/analytics1m | jq .
+./bin/analytics1d
+./bin/analytics1w
+./bin/analytics1m
 ```
 
 <details>
@@ -1574,8 +1575,3 @@ export CLOUDFLARE_TOKEN="token"
 ```
 
 </details>
-
-TODO:
-
-* go script to upload json to s3
-* chartjs pages
