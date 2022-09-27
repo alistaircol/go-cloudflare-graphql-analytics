@@ -152,7 +152,7 @@ func uploadAnalyticsSecondary(body []byte) {
 
 	now := time.Now().UTC()
 	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
-	object := aws.String(fmt.Sprintf("m-%s.json", until.Format("2006-01-02T15:04")))
+	object := aws.String(fmt.Sprintf("m-%s.json", until.Format("2006-01-02")))
 
 	result, err := awsS3Uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
