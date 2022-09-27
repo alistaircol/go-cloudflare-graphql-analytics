@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
@@ -27,12 +28,18 @@ type graphqlQueryRequest struct {
 	Variables graphqlQueryVariables `json:"variables"`
 }
 
-func main() {
+func handler(ctx context.Context) error {
 	analytics := getAnalytics()
 	body, _ := ioutil.ReadAll(analytics.Body)
 
 	uploadAnalyticsPrimary(body)
 	uploadAnalyticsSecondary(body)
+
+	return nil
+}
+
+func main() {
+	lambda.Start(handler)
 }
 
 func getEnvironmentVariable(key string) string {
