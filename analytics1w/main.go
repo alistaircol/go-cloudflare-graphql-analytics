@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/fatih/color"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -17,9 +18,9 @@ import (
 )
 
 type graphqlQueryVariables struct {
-	Zone        string `json:"zone"`
-	DatetimeGt  string `json:"datetime_gt"`
-	DatetimeLeq string `json:"datetime_leq"`
+	Zone    string `json:"zone"`
+	DateGt  string `json:"date_gt"`
+	DateLeq string `json:"date_leq"`
 }
 
 type graphqlQueryRequest struct {
@@ -29,8 +30,10 @@ type graphqlQueryRequest struct {
 
 func main() {
 	analytics := getAnalytics()
-	uploadAnalyticsPrimary(*analytics)
-	uploadAnalyticsSecondary(*analytics)
+	body, _ := ioutil.ReadAll(analytics.Body)
+
+	uploadAnalyticsPrimary(body)
+	uploadAnalyticsSecondary(body)
 }
 
 func getEnvironmentVariable(key string) string {
@@ -51,17 +54,17 @@ func getAnalytics() *http.Response {
 
 	now := time.Now().UTC()
 	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
-	from := until.Add(-(time.Hour * 24))
+	from := until.Add(-(time.Hour * 24 * 7))
 
 	graphqlQuery := `query {
   viewer {
     analytics: zones(filter: {zoneTag: $zone}) {
-      day: httpRequests1hGroups(filter: {datetime_gt: $datetime_gt, datetime_leq: $datetime_leq}, limit: 24, orderBy: [datetime_DESC]) {
+      httpRequests1dGroups(filter: {date_gt: $date_gt, date_leq: $date_leq}, limit: 7, orderBy: [date_DESC]) {
         sum {
           requests
         }
         dimensions {
-          datetime
+          date
         }
         uniq {
           uniques
@@ -74,9 +77,9 @@ func getAnalytics() *http.Response {
 
 	// https://stackoverflow.com/a/62479701/5873008
 	graphqlVariables := &graphqlQueryVariables{
-		Zone:        cfZone,
-		DatetimeGt:  from.Format(time.RFC3339),
-		DatetimeLeq: until.Format(time.RFC3339),
+		Zone:    cfZone,
+		DateGt:  from.Format("2006-01-02"),
+		DateLeq: until.Format("2006-01-02"),
 	}
 
 	graphqlQueryRequest := &graphqlQueryRequest{
@@ -103,14 +106,10 @@ func getAnalytics() *http.Response {
 		os.Exit(1)
 	}
 
-	// fmt.Println(httpResponse.StatusCode)
-	// TODO: check successful response
-	//res, _ := ioutil.ReadAll(httpResponse.Body)
-
 	return httpResponse
 }
 
-func uploadAnalyticsPrimary(response http.Response) {
+func uploadAnalyticsPrimary(body []byte) {
 	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
 	awsConfig, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -122,17 +121,17 @@ func uploadAnalyticsPrimary(response http.Response) {
 	awsS3Client := s3.NewFromConfig(awsConfig)
 	awsS3Uploader := manager.NewUploader(awsS3Client)
 
-	object := aws.String("1d.json")
+	object := aws.String("1w.json")
 	result, err := awsS3Uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    object,
-		Body:   response.Body,
+		Body:   bytes.NewReader(body),
 	})
 
 	log.Printf("primary result: %v", result)
 }
 
-func uploadAnalyticsSecondary(response http.Response) {
+func uploadAnalyticsSecondary(body []byte) {
 	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
 	awsConfig, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
@@ -146,12 +145,12 @@ func uploadAnalyticsSecondary(response http.Response) {
 
 	now := time.Now().UTC()
 	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
-	object := aws.String(fmt.Sprintf("day-%s.json", until.Format("2006-01-02T15:04")))
+	object := aws.String(fmt.Sprintf("d-%s.json", until.Format("2006-01-02T15:04")))
 
 	result, err := awsS3Uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    object,
-		Body:   response.Body,
+		Body:   bytes.NewReader(body),
 	})
 
 	log.Printf("secondary result: %v", result)
