@@ -2,10 +2,15 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/fatih/color"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -23,9 +28,26 @@ type graphqlQueryRequest struct {
 }
 
 func main() {
-	cfZone := get("CLOUDFLARE_ZONE")
-	cfEmail := get("CLOUDFLARE_EMAIL")
-	cfToken := get("CLOUDFLARE_TOKEN")
+	analytics := getAnalytics()
+	uploadAnalyticsPrimary(*analytics)
+	uploadAnalyticsSecondary(*analytics)
+}
+
+func getEnvironmentVariable(key string) string {
+	value, ok := os.LookupEnv(key)
+
+	if !ok {
+		color.Red("%s has not been set", key)
+		os.Exit(1)
+	}
+
+	return value
+}
+
+func getAnalytics() *http.Response {
+	cfZone := getEnvironmentVariable("CLOUDFLARE_ZONE")
+	cfEmail := getEnvironmentVariable("CLOUDFLARE_EMAIL")
+	cfToken := getEnvironmentVariable("CLOUDFLARE_TOKEN")
 
 	now := time.Now().UTC()
 	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
@@ -83,17 +105,54 @@ func main() {
 
 	// fmt.Println(httpResponse.StatusCode)
 	// TODO: check successful response
-	res, _ := ioutil.ReadAll(httpResponse.Body)
-	fmt.Printf("%s", res)
+	//res, _ := ioutil.ReadAll(httpResponse.Body)
+
+	return httpResponse
 }
 
-func get(key string) string {
-	value, ok := os.LookupEnv(key)
-
-	if !ok {
-		color.Red("%s has not been set", key)
-		os.Exit(1)
+func uploadAnalyticsPrimary(response http.Response) {
+	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
+	awsConfig, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
 	}
 
-	return value
+	bucket := getEnvironmentVariable("AWS_S3_BUCKET")
+	awsS3Client := s3.NewFromConfig(awsConfig)
+	awsS3Uploader := manager.NewUploader(awsS3Client)
+
+	object := aws.String("1d.json")
+	result, err := awsS3Uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    object,
+		Body:   response.Body,
+	})
+
+	log.Printf("primary result: %v", result)
+}
+
+func uploadAnalyticsSecondary(response http.Response) {
+	// https://aws.github.io/aws-sdk-go-v2/docs/sdk-utilities/s3/
+	awsConfig, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Printf("error: %v", err)
+		return
+	}
+
+	bucket := getEnvironmentVariable("AWS_S3_BUCKET")
+	awsS3Client := s3.NewFromConfig(awsConfig)
+	awsS3Uploader := manager.NewUploader(awsS3Client)
+
+	now := time.Now().UTC()
+	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
+	object := aws.String(fmt.Sprintf("day-%s.json", until.Format("2006-01-02T15:04")))
+
+	result, err := awsS3Uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    object,
+		Body:   response.Body,
+	})
+
+	log.Printf("secondary result: %v", result)
 }
