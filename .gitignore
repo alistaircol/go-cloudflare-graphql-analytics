@@ -1,6 +1,6 @@
 .idea/
 bin/**
 !bin/.gitkeep
-a.sh
+run.sh
 **terraform**
 !terraform.tfvars.example

@@ -1,0 +1,140 @@
+<html lang="en" style="background: #1d1e20 !important;">
+<head>
+    <meta charSet="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <title>Ally's Chart</title>
+</head>
+<body className="max-w-4xl py-4">
+<div>
+    <canvas id="myChart"></canvas>
+</div>
+<script>
+    let stats = {};
+
+    document.onreadystatechange = function () {
+        if (document.readyState === "interactive") {
+            fetch('1m.json')
+                .then((response) => response.json())
+                .then((json) => {
+                    stats = json.data.viewer.analytics[0].httpRequests1dGroups;
+                    console.log(stats);
+                })
+                .then(() => {
+                    const ctx = document.getElementById('myChart').getContext('2d');
+
+                    let labels = [];
+                    let visitors = [];
+                    let requests = [];
+                    for (let day of stats) {
+                        labels.push(day.dimensions.date);
+                        visitors.push(day.uniq.uniques);
+                        requests.push(day.sum.requests);
+                    }
+
+                    labels.reverse();
+                    visitors.reverse();
+                    requests.reverse();
+
+                    let options = {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Requests',
+                                    // backgroundColor: '#4cd137', // https://flatuicolors.com/palette/gb#download-progrss
+                                    backgroundColor: 'rgba(76, 209, 55, 0.1)',
+                                    borderColor: '#44bd32', // https://flatuicolors.com/palette/gb#skirret-green
+                                    data: requests,
+                                    fill: true,
+                                    yAxisID: 'yr'
+                                },
+                                {
+                                    label: 'Visitors',
+                                    // backgroundColor: '#00a8ff', // https://flatuicolors.com/palette/gb#protoss-pylon
+                                    backgroundColor: 'rgba(0, 168, 255, 0.1)',
+                                    borderColor: '#0097e6', // https://flatuicolors.com/palette/gb#vanadyl-blue
+                                    data: visitors,
+                                    fill: true,
+                                    yAxisID: 'yv'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            stacked: false,
+                            animation: false,
+
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Analytics for ac93.uk'
+                                },
+                                subtitle: {
+                                    display: true,
+                                    text: 'Last 30 days'
+                                }
+                            },
+
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+
+                            scales: {
+                                yv: {
+                                    title: {
+                                        display: true,
+                                        text: 'Visitors'
+                                    },
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'right',
+
+                                    // grid line settings
+                                    grid: {
+                                        drawOnChartArea: false, // only want the grid lines for one axis to show up
+                                    },
+                                },
+                                yr: {
+                                    title: {
+                                        display: true,
+                                        text: 'Requests'
+                                    },
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                },
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Time'
+                                    },
+
+                                    ticks: {
+                                        display: false,
+                                    },
+                                    grid: {
+                                        tickLength: 0
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    Chart.defaults.color = '#9ca3af';
+                    new Chart(ctx, options);
+                });
+        }
+    };
+</script>
+</body>
+
+<script
+        src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+        integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA=="
+        crossOrigin="anonymous"
+        referrerpolicy="no-referrer"
+></script>
+</html>
