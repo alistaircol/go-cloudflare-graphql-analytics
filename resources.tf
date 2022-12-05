@@ -53,6 +53,10 @@ resource "aws_iam_role" "lambda_role" {
 EOF
 }
 
+resource "aws_s3_bucket" "analytics" {
+  bucket = "analytics"
+}
+
 # Attach the AWSLambdaBasicExecutionRole policy to the IAM role
 resource "aws_iam_policy" "lambda_policy" {
   name   = "lambda_policy"
@@ -66,6 +70,17 @@ resource "aws_iam_policy" "lambda_policy" {
       ],
       "Effect": "Allow",
       "Resource": "arn:aws:logs:*:*:*"
+    },
+    {
+      "Sid": "WritePermission",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": [
+        "${aws_s3_bucket.analytics.arn}/*"
+      ]
     }
   ]
 }
