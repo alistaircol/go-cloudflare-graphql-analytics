@@ -4,3 +4,7 @@ bin/**
 src/main
 src/main.zip
 .env
+terraform/.terraform
+terraform/terraform.tfvars
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup

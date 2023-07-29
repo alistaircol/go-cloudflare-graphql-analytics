@@ -14,7 +14,9 @@ includes:
     taskfile: tasks/event.yaml
   s3:
     taskfile: tasks/s3.yaml
-
+  terraform:
+    taskfile: terraform/Taskfile.yaml
+    dir: terraform
 
 tasks:
   default:

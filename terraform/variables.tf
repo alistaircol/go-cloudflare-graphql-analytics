@@ -10,5 +10,20 @@ variable "aws_region" {
 
 variable "aws_lambda_runtime" {
   type    = string
-  default = "go2.x"
+  default = "go1.x"
+}
+
+variable "bucket_name" {}
+variable "code_bucket_name" {}
+
+variable "cloudflare_zone" {}
+variable "cloudflare_email" {}
+variable "cloudflare_token" {}
+
+
+variable "allowed_bucket_ingress_sources" {
+  type = list(object({
+    name      = string
+    addresses = set(string)
+  }))
 }

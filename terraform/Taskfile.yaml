@@ -6,4 +6,31 @@ tasks:
     cmds:
     - task --sort=none
 
-  # TODO: plan, apply, destroy
+  init:
+    desc: Run `terraform init`
+    cmds:
+    - terraform init {{.CLI_ARGS}}
+
+  plan:
+    desc: Run `terraform plan`
+    cmds:
+      - terraform plan {{.CLI_ARGS}}
+
+  apply:
+    desc: Run `terraform apply`
+    cmds:
+      - terraform apply {{.CLI_ARGS}}
+
+  # TODO: upload resources to bucket for viewing charts
+  upload_to_code_bucket:
+    desc: Uploads zipped binary to the code bucket
+    vars:
+      ZIPPED_BINARY_PATH: ../src/main.zip
+    cmds:
+    - >-
+      aws
+      --profile={{.AWS_PROFILE}}
+      s3
+      cp
+      {{.ZIPPED_BINARY_PATH}}
+      s3://{{.CODE_BUCKET_NAME}}/build.zip

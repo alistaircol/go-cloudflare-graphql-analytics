@@ -1,0 +1,18 @@
+aws_profile      = "analytics"
+bucket_name      = "ac93uk-cloudflare-analytics"
+code_bucket_name = "lambda-ac93uk-cloudflare-analytics"
+
+cloudflare_zone  = ""
+cloudflare_email = ""
+cloudflare_token = ""
+
+allowed_bucket_ingress_sources = [
+  {
+    name = "home",
+    addresses = ["127.0.0.1"]
+  },
+  {
+    name = "office",
+    addresses = ["127.0.0.2"]
+  },
+]
