@@ -1,6 +1,6 @@
 > :warning: **Work in progress**
 
-![Chart](https://raw.githubusercontent.com/alistaircol/go-cloudflare-graphql-analytics/main/chart.png)
+![Chart](https://raw.githubusercontent.com/alistaircol/go-cloudflare-graphql-analytics/main/.github/chart.png)
 
 # Overview
 

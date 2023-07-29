@@ -1,5 +1,8 @@
 version: '3'
 
+vars:
+  GO_BUILD_FLAGS: -ldflags="-s -w" -trimpath -buildmode=pie -buildmode=c-shared -buildvcs=false
+
 tasks:
   default:
     cmds:
@@ -13,6 +16,5 @@ tasks:
       GOARCH: amd64
       CGO_ENABLED: 0
     cmds:
-    - (cd analytics1d && go clean && go build -o ../bin/dist/analytics1d && cd ../bin/dist && zip analytics1d.zip analytics1d)
-    - (cd analytics1w && go clean && go build -o ../bin/dist/analytics1w && cd ../bin/dist && zip analytics1w.zip analytics1w)
-    - (cd analytics1m && go clean && go build -o ../bin/dist/analytics1m && cd ../bin/dist && zip analytics1m.zip analytics1m)
+    - go build {{.GO_BUILD_FLAGS}} -o main .
+    - zip main main.zip

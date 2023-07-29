@@ -1,0 +1,8 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+    - task --sort=none
+
+  # TODO: plan, apply, destroy
