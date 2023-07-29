@@ -1,20 +1,15 @@
-version: '3'
+---
+version: "3"
 
-vars:
-  GO_BUILD_FLAGS: -ldflags="-s -w" -trimpath -buildmode=pie -buildmode=c-shared -buildvcs=false
+includes:
+  go:
+    taskfile: src/Taskfile.yaml
+    dir: src
+  localstack:
+    taskfile: tasks/localstack.yaml
 
 tasks:
   default:
+    silent: true
     cmds:
-    - (cd analytics1d && go clean && go build -ldflags="-s -w" -trimpath -buildmode=pie -buildmode=c-shared -o ../bin/analytics1d)
-    - (cd analytics1w && go clean && go build -ldflags="-s -w" -trimpath -buildmode=pie -buildmode=c-shared -o ../bin/analytics1w)
-    - (cd analytics1m && go clean && go build -ldflags="-s -w" -trimpath -buildmode=pie -buildmode=c-shared -o ../bin/analytics1m)
-
-  dist:
-    env:
-      GOOS: linux
-      GOARCH: amd64
-      CGO_ENABLED: 0
-    cmds:
-    - go build {{.GO_BUILD_FLAGS}} -o main .
-    - zip main main.zip
+      - cmd: task --list --sort=none

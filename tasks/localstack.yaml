@@ -1,0 +1,58 @@
+---
+version: "3"
+
+vars:
+  LOCALSTACK: docker exec localstack
+  LAMBDA_NAME: cloudflare-analytics
+  LAMBDA_ZIP_FILE: /tmp/cloudflare-analytics/main.zip
+
+tasks:
+  shell:
+    desc: Shell inside localstack container
+    interactive: true
+    cmds:
+    - docker exec -it localstack /bin/bash
+
+  setup:
+    desc: Setup local infrastructure
+    cmds:
+    - >-
+      echo "TODO: setup lambda function and an invocation with parameters from eventbridge"
+
+  # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html
+  lambda_create_function:
+    desc: Step 0 - Create build and lambda function
+    status:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      list-functions
+      | jq --exit-status -r '.Functions[] | select(.FunctionName == "{{.LAMBDA_NAME}}") | .FunctionArn'
+    aliases:
+    - step0
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      create-function
+      --function-name="{{.LAMBDA_NAME}}"
+      --runtime="go1.x"
+      --handler="main"
+      --memory-size=128
+      --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
+      --role arn:aws:iam::000000000000:role/apigw
+
+  update_lambda_function:
+    desc: Update lambda code
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      update-function-code
+      --function-name="{{.LAMBDA_NAME}}"
+      --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      update-function-configuration
+      --function-name="{{.LAMBDA_NAME}}"
