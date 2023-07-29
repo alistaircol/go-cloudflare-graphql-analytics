@@ -2,11 +2,10 @@ package analytics
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"github.com/alistaircol/go-cloudflare-graphql-analytics/cloudflare"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"net/http"
 	"os"
 	"time"
@@ -63,20 +62,20 @@ func (q Monthly) GetCloudflareQueryRequest(zone string) cloudflare.GraphqlQueryR
 	}
 }
 
-func (q Monthly) UploadPrimary(client s3.Client, body []byte) {
-	_, _ = client.PutObject(context.TODO(), &s3.PutObjectInput{
+func (q Monthly) UploadPrimary(client s3.S3, body []byte) {
+	_, _ = client.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
 		Key:    aws.String("1m.json"),
 		Body:   bytes.NewReader(body),
 	})
 }
 
-func (q Monthly) UploadSecondary(client s3.Client, body []byte) {
+func (q Monthly) UploadSecondary(client s3.S3, body []byte) {
 	now := time.Now().UTC()
 	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
 	object := aws.String(fmt.Sprintf("m-%s.json", until.Format("2006-01-02")))
 
-	_, _ = client.PutObject(context.TODO(), &s3.PutObjectInput{
+	_, _ = client.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
 		Key:    object,
 		Body:   bytes.NewReader(body),

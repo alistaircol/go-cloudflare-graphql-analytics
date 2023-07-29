@@ -1,15 +1,23 @@
 ---
 version: "3"
 
+dotenv:
+- .env
+
 includes:
   go:
     taskfile: src/Taskfile.yaml
     dir: src
   localstack:
     taskfile: tasks/localstack.yaml
+  event:
+    taskfile: tasks/event.yaml
+  s3:
+    taskfile: tasks/s3.yaml
+
 
 tasks:
   default:
     silent: true
     cmds:
-      - cmd: task --list --sort=none
+    - cmd: task --list --sort=none

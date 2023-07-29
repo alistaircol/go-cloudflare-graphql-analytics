@@ -5,6 +5,23 @@ vars:
   LOCALSTACK: docker exec localstack
   LAMBDA_NAME: cloudflare-analytics
   LAMBDA_ZIP_FILE: /tmp/cloudflare-analytics/main.zip
+  LAMBDA_ENVIRONMENT:
+    sh: |-
+      cat <<"EOF" | jq --compact-output .
+      {
+        "Variables": {
+          "AWS_ENDPOINT": "http://localstack:4566",
+          "CLOUDFLARE_ZONE": "{{.CLOUDFLARE_ZONE}}",
+          "CLOUDFLARE_EMAIL": "{{.CLOUDFLARE_EMAIL}}",
+          "CLOUDFLARE_TOKEN": "{{.CLOUDFLARE_TOKEN}}",
+          "AWS_S3_BUCKET": "{{.AWS_S3_BUCKET}}",
+          "LOCAL_DEVELOPMENT": "true"
+        }
+      }
+      EOF
+  LAMBDA_EVENT_BUS: default
+  LAMBDA_EVENT_SOURCE: localstack
+  LAMBDA_EVENT_TYPE: analytics
 
 tasks:
   shell:
@@ -18,6 +35,21 @@ tasks:
     cmds:
     - >-
       echo "TODO: setup lambda function and an invocation with parameters from eventbridge"
+
+  create_bucket:
+    desc: Step 0 - Create bucket which lambda downloads files to
+    status:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3api
+      list-buckets
+      | jq --exit-status -r '.Buckets[] | select(.Name == "{{.AWS_S3_BUCKET}}") | .Name'
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3api
+      create-bucket
+      --bucket="{{.AWS_S3_BUCKET}}"
 
   # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html
   lambda_create_function:
@@ -40,7 +72,8 @@ tasks:
       --handler="main"
       --memory-size=128
       --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
-      --role arn:aws:iam::000000000000:role/apigw
+      --environment='{{.LAMBDA_ENVIRONMENT}}'
+      --role="arn:aws:iam::000000000000:role/lambda"
 
   update_lambda_function:
     desc: Update lambda code
@@ -56,3 +89,50 @@ tasks:
       lambda
       update-function-configuration
       --function-name="{{.LAMBDA_NAME}}"
+      --environment='{{.LAMBDA_ENVIRONMENT}}'
+
+  setup_event_bus:
+    vars:
+      EVENT_PATTERN:
+        sh: |-
+          cat <<"EOF" | jq --compact-output .
+          {
+            "source": [
+              "{{.LAMBDA_EVENT_SOURCE}}"
+            ],
+            "detail-type": [
+              "{{.LAMBDA_EVENT_TYPE}}"
+            ]
+          }
+          EOF
+      LAMBDA_ARN:
+        sh: >-
+          {{.LOCALSTACK}} awslocal
+          lambda
+          list-functions
+          | jq --exit-status -r '.Functions[] | select(.FunctionName == "{{.LAMBDA_NAME}}") | .FunctionArn'
+      EVENT_TARGETS:
+        sh: |-
+          cat <<"EOF" | jq --compact-output .
+          {
+            "Id": "analytics-lambda",
+            "Arn": "{{.LAMBDA_ARN}}"
+          }
+          EOF
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      events
+      put-rule
+      --event-bus-name="default"
+      --state="ENABLED"
+      --description="Invoke analytics lambda for events on this bus"
+      --name="analytics-lambda-invocation"
+      --event-pattern='{{.EVENT_PATTERN}}'
+    - >-
+      {{.LOCALSTACK}} awslocal
+      events
+      put-targets
+      --event-bus-name="default"
+      --rule="analytics-lambda-invocation"
+      --targets='{{.EVENT_TARGETS}}'

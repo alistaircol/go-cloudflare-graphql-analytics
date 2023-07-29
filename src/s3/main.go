@@ -1,47 +1,29 @@
 package s3
 
 import (
-	"context"
 	"errors"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"log"
 	"os"
 	"strconv"
 )
 
-func MakeS3Service() (s3.Client, error) {
-	bucket := os.Getenv("PAYLOAD_BUCKET_NAME")
+func MakeS3Service() (s3.S3, error) {
+	bucket := os.Getenv("AWS_S3_BUCKET")
 	if bucket == "" {
-		return s3.Client{}, errors.New("no PAYLOAD_BUCKET_NAME given")
+		return s3.S3{}, errors.New("no AWS_S3_BUCKET given")
 	}
 
-	var cfg aws.Config
-
-	cfg, _ = config.LoadDefaultConfig(context.TODO())
+	log.Print("Creating AWS config for S3 service session")
+	config := &aws.Config{}
 
 	uri := os.Getenv("AWS_ENDPOINT")
 	if uri != "" {
 		log.Printf("Non-empty AWS_ENDPOINT given, setting in config: %s", uri)
-
-		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			if service == s3.ServiceID {
-				return aws.Endpoint{
-					URL: uri,
-				}, nil
-			}
-
-			// returning EndpointNotFoundError will allow the service to fallback to it's default resolution
-			return aws.Endpoint{}, &aws.EndpointNotFoundError{}
-		})
-
-		cfg, _ = config.LoadDefaultConfig(context.TODO(), config.WithEndpointResolverWithOptions(customResolver))
+		config.Endpoint = aws.String(uri)
 	}
-
-	var svc s3.Client
-
-	svc = *s3.NewFromConfig(cfg)
 
 	l := os.Getenv("LOCAL_DEVELOPMENT")
 	localDevelopment, _ := strconv.ParseBool(l)
@@ -50,13 +32,15 @@ func MakeS3Service() (s3.Client, error) {
 	if localDevelopment {
 		log.Print("LOCAL_DEVELOPMENT environment set, disabling SSL verification and using S3ForcePathStyle")
 
-		//config.DisableSSL = aws.Bool(true)
-		//config.S3ForcePathStyle = aws.Bool(true)
-
-		svc = *s3.NewFromConfig(cfg, func(o *s3.Options) {
-			o.UsePathStyle = true
-		})
+		config.DisableSSL = aws.Bool(true)
+		config.S3ForcePathStyle = aws.Bool(true)
 	}
 
-	return svc, nil
+	log.Print("Creating AWS session from config")
+	sess, _ := session.NewSession(config)
+
+	log.Print("Creating S3 service from session")
+	svc := s3.New(sess)
+
+	return *svc, nil
 }

@@ -2,11 +2,10 @@ package analytics
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"github.com/alistaircol/go-cloudflare-graphql-analytics/cloudflare"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"net/http"
 	"os"
 	"time"
@@ -39,7 +38,7 @@ func (q Weekly) GetCloudflareAnalytics() (*http.Response, error) {
 }
 
 func (q Weekly) GetCloudflareQueryRequest(zone string) cloudflare.GraphqlQueryRequest {
-	var query = GraphqlQueryDay
+	var query = GraphqlQueryWeek
 
 	type GraphqlQueryVariablesWeek struct {
 		Zone    string `json:"zone"`
@@ -51,7 +50,7 @@ func (q Weekly) GetCloudflareQueryRequest(zone string) cloudflare.GraphqlQueryRe
 	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
 	from := until.Add(-(time.Hour * 24 * 7))
 
-	variables := GraphqlQueryVariablesWeek{
+	variables := &GraphqlQueryVariablesWeek{
 		Zone:    zone,
 		DateGt:  from.Format("2006-01-02"),
 		DateLeq: until.Format("2006-01-02"),
@@ -63,20 +62,20 @@ func (q Weekly) GetCloudflareQueryRequest(zone string) cloudflare.GraphqlQueryRe
 	}
 }
 
-func (q Weekly) UploadPrimary(client s3.Client, body []byte) {
-	_, _ = client.PutObject(context.TODO(), &s3.PutObjectInput{
+func (q Weekly) UploadPrimary(client s3.S3, body []byte) {
+	_, _ = client.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
 		Key:    aws.String("1w.json"),
 		Body:   bytes.NewReader(body),
 	})
 }
 
-func (q Weekly) UploadSecondary(client s3.Client, body []byte) {
+func (q Weekly) UploadSecondary(client s3.S3, body []byte) {
 	now := time.Now().UTC()
 	until := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, time.UTC)
 	object := aws.String(fmt.Sprintf("w-%s.json", until.Format("2006-01-02")))
 
-	_, _ = client.PutObject(context.TODO(), &s3.PutObjectInput{
+	_, _ = client.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(os.Getenv("AWS_S3_BUCKET")),
 		Key:    object,
 		Body:   bytes.NewReader(body),

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 )
@@ -15,6 +16,8 @@ type GraphqlQueryRequest struct {
 
 func GetAnalytics(req GraphqlQueryRequest) (*http.Response, error) {
 	d, _ := json.Marshal(req)
+
+	log.Printf("cloudflare/main.go: request data: %s", d)
 
 	// https://stackoverflow.com/a/41034588/5873008
 	c := &http.Client{}

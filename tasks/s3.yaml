@@ -1,0 +1,36 @@
+---
+version: "3"
+
+tasks:
+  list:
+    desc: List objects in the bucket
+    silent: true
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3
+      ls
+      --human-readable
+      s3://{{.AWS_S3_BUCKET}}
+
+  get:
+    desc: Get the payload file from the bucket (e.g. `task s3:get -- filename.json`)
+    silent: true
+    cmds:
+    - >-
+      http
+      --verbose
+      --json
+      GET
+      http://localhost:4566/{{.AWS_S3_BUCKET}}/{{.CLI_ARGS}}
+
+  delete:
+    desc: Delete all objects in the bucket
+    silent: true
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3
+      rm
+      --recursive
+      s3://{{.AWS_S3_BUCKET}}

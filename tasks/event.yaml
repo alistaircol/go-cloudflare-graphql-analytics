@@ -1,0 +1,57 @@
+---
+version: "3"
+
+tasks:
+  day:
+    desc: Dispatch Eventbridge notification to invoke lambda to gather daily stats
+    silent: true
+    cmds:
+    - task: dispatch
+      vars:
+        PERIOD: d
+
+  week:
+    desc: Dispatch Eventbridge notification to invoke lambda to gather weekly stats
+    silent: true
+    cmds:
+    - task: dispatch
+      vars:
+        PERIOD: w
+
+  month:
+    desc: Dispatch Eventbridge notification to invoke lambda to gather monthly stats
+    silent: true
+    cmds:
+    - task: dispatch
+      vars:
+        PERIOD: m
+
+  dispatch:
+    internal: true
+    preconditions:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      list-functions
+      | jq --exit-status -r '.Functions[] | select(.FunctionName == "{{.LAMBDA_NAME}}") | .FunctionArn'
+    vars:
+      EVENT:
+        sh: |-
+          cat <<"EOF" | jq -r --compact-output '.[0].Detail |= tojson'
+          [
+            {
+              "Source": "{{.LAMBDA_EVENT_SOURCE}}",
+              "DetailType": "{{.LAMBDA_EVENT_TYPE}}",
+              "EventBusName": "{{.LAMBDA_EVENT_BUS}}",
+              "Detail": {
+                "period": "{{.PERIOD}}"
+              }
+            }
+          ]
+          EOF
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      events
+      put-events
+      --entries='{{.EVENT}}'
