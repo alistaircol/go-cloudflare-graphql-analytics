@@ -11,6 +11,11 @@ tasks:
     cmds:
     - terraform init {{.CLI_ARGS}}
 
+  fmt:
+    desc: Run `terraform fmt`
+    cmds:
+    - terraform fmt {{.CLI_ARGS}}
+
   plan:
     desc: Run `terraform plan`
     cmds:
@@ -34,3 +39,17 @@ tasks:
       cp
       {{.ZIPPED_BINARY_PATH}}
       s3://{{.CODE_BUCKET_NAME}}/build.zip
+
+  update_lambda_code:
+    desc: Upload new binary and re-fresh lambda
+    vars:
+      FUNCTION_NAME: ac93uk-cloudflare-analytics
+    cmds:
+    - task: upload_to_code_bucket
+    - >-
+      aws
+      --no-cli-pager
+      --profile={{.AWS_PROFILE}}
+      lambda
+      update-function-configuration
+      --function-name="{{.FUNCTION_NAME}}"
