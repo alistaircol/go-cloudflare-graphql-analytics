@@ -2,6 +2,7 @@ resource "aws_cloudwatch_event_rule" "weekly_on_daily_schedule" {
   name                = "ac93uk-cloudflare-analytics-weekly-on-daily-schedule"
   description         = "Dispatch event to run weekly cloudflare analytics every day"
   schedule_expression = "cron(0 * * * ? *)"
+  role_arn            = aws_iam_role.lambda_role.arn
 }
 
 resource "aws_cloudwatch_event_target" "weekly_on_daily_schedule" {
