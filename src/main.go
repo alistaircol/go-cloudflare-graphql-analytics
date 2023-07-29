@@ -8,6 +8,7 @@ import (
 	"github.com/alistaircol/go-cloudflare-graphql-analytics/s3"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-xray-sdk-go/xray"
 	"io"
 	"log"
 )
@@ -21,6 +22,8 @@ func main() {
 }
 
 func handler(ctx context.Context, event events.CloudWatchEvent) error {
+	ctx, seg := xray.BeginSegment(context.Background(), "go-cloudflare-graphql-analytics")
+
 	log.Print("main.go: Going to get details from event")
 	var detail Detail
 	if err := json.Unmarshal(event.Detail, &detail); err != nil {
@@ -52,6 +55,8 @@ func handler(ctx context.Context, event events.CloudWatchEvent) error {
 	period.UploadPrimary(svc, b)
 	log.Print("main.go: Going upload secondary")
 	period.UploadSecondary(svc, b)
+
+	seg.Close(nil)
 
 	return nil
 }
