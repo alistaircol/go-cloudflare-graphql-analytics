@@ -22,6 +22,7 @@ data "aws_iam_policy_document" "lambda_policy" {
       type = "Service"
       identifiers = [
         "lambda.amazonaws.com",
+        # events is probably not required
         "events.amazonaws.com",
         "s3.amazonaws.com",
       ]

@@ -19,12 +19,17 @@ tasks:
   plan:
     desc: Run `terraform plan`
     cmds:
-      - terraform plan {{.CLI_ARGS}}
+    - terraform plan {{.CLI_ARGS}}
 
   apply:
     desc: Run `terraform apply`
     cmds:
-      - terraform apply {{.CLI_ARGS}}
+    - terraform apply {{.CLI_ARGS}}
+
+  console:
+    desc: Run `terraform console`
+    cmds:
+    - terraform console {{.CLI_ARGS}}
 
   # TODO: upload resources to bucket for viewing charts
   upload_to_code_bucket:

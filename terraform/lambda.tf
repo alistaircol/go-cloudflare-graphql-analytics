@@ -34,3 +34,23 @@ resource "aws_lambda_function" "analytics" {
     data.aws_s3_object.lambda_executable
   ]
 }
+
+locals {
+  events = toset([
+    aws_cloudwatch_event_rule.daily_on_hourly_schedule.arn,
+    aws_cloudwatch_event_rule.daily_on_daily_schedule.arn,
+    aws_cloudwatch_event_rule.weekly_on_daily_schedule.arn,
+    aws_cloudwatch_event_rule.monthly_on_daily_schedule.arn,
+  ])
+}
+
+# can't use source_arn with wildcard, e.g. arn:aws:events:eu-west-2:634674305913:rule/ac93uk-cloudflare-analytics*
+resource "aws_lambda_permission" "allow_events_to_invoke_lambda" {
+  for_each = local.events
+
+  statement_id_prefix = "AllowExecutionFromEvent"
+  action              = "lambda:InvokeFunction"
+  function_name       = aws_lambda_function.analytics.function_name
+  principal           = "events.amazonaws.com"
+  source_arn          = each.value
+}
