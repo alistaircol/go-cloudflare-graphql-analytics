@@ -136,3 +136,5 @@ tasks:
       --event-bus-name="default"
       --rule="analytics-lambda-invocation"
       --targets='{{.EVENT_TARGETS}}'
+
+  # TODO: task to copy resources/ into the data bucket locally, and open website hosting for it
