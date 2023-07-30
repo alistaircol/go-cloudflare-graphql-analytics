@@ -5,10 +5,11 @@ resource "aws_cloudwatch_event_rule" "monthly_on_daily_schedule" {
 }
 
 resource "aws_cloudwatch_event_target" "monthly_on_daily_schedule" {
-  rule = aws_cloudwatch_event_rule.monthly_on_daily_schedule.name
-  arn  = aws_lambda_function.analytics.arn
-
+  rule  = aws_cloudwatch_event_rule.monthly_on_daily_schedule.name
+  arn   = aws_lambda_function.analytics.arn
   input = jsonencode({
-    period : "m"
+    Detail: {
+      period : "m"
+    }
   })
 }

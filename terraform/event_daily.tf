@@ -11,19 +11,21 @@ resource "aws_cloudwatch_event_rule" "daily_on_daily_schedule" {
 }
 
 resource "aws_cloudwatch_event_target" "daily_on_hourly_schedule" {
-  rule = aws_cloudwatch_event_rule.daily_on_hourly_schedule.name
-  arn  = aws_lambda_function.analytics.arn
-
+  rule  = aws_cloudwatch_event_rule.daily_on_hourly_schedule.name
+  arn   = aws_lambda_function.analytics.arn
   input = jsonencode({
-    period : "d"
+    Detail: {
+      period : "d"
+    }
   })
 }
 
 resource "aws_cloudwatch_event_target" "daily_on_daily_schedule" {
-  rule = aws_cloudwatch_event_rule.daily_on_daily_schedule.name
-  arn  = aws_lambda_function.analytics.arn
-
+  rule  = aws_cloudwatch_event_rule.daily_on_daily_schedule.name
+  arn   = aws_lambda_function.analytics.arn
   input = jsonencode({
-    period : "d"
+    Detail: {
+      period : "d"
+    }
   })
 }
