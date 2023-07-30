@@ -2,6 +2,9 @@
 
 ![Chart](https://raw.githubusercontent.com/alistaircol/go-cloudflare-graphql-analytics/main/.github/chart.png)
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Overview
 
 A `go` app which runs in a [AWS Lambda](https://aws.amazon.com/lambda/) on a schedule with [Amazon EventBridge](https://aws.amazon.com/eventbridge/) to invoke the lambda which will query Cloudflare analytics for a domain zone and save the payloads in an [S3](https://aws.amazon.com/s3/) bucket for use in [chartjs](https://www.chartjs.org/).
@@ -45,6 +48,11 @@ task s3:list
 You should then see files have been created by the lambda.
 
 You can then view the chart at, e.g. `http://analytics-bucket.s3.localhost.localstack.cloud:4566/d.html`
+
+---
+
+<!-- task-start -->
+<!-- task-end -->
 
 ## Production Deployment
 

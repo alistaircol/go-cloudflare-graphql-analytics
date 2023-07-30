@@ -1,0 +1,40 @@
+---
+name: Update documentation
+
+# yamllint disable-line rule:truthy
+on:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update documentation
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: arduino/setup-task@v1
+
+    - name: Get README task list
+      id: root
+      run: |
+        { echo "tasks<<EOF"; task; echo "EOF"; } >> "$GITHUB_OUTPUT"
+
+    - name: Update README with task list
+      uses: alistaircol/update-markdown-action@v0.1.1
+      with:
+        file: README.md
+        delimiter_open: <!-- task-start -->
+        delimiter_close: <!-- task-end -->
+        content: |
+          ```
+          ${{ steps.root.outputs.tasks }}
+          ```
+
+    - uses: technote-space/toc-generator@v4
+      with:
+        TOC_TITLE: ""
+        TARGET_PATHS: README.md
+        COMMIT_MESSAGE: |
+          chore(docs): Update README
