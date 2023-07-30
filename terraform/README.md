@@ -1,5 +1,7 @@
 # Terraform
 
+![Chart](https://raw.githubusercontent.com/alistaircol/go-cloudflare-graphql-analytics/main/.github/function-overview.png)
+
 ## Preamble
 
 Will create all relevant resources to invoke lambda on various schedules to query Cloudflare analytics and dump the payload in a bucket.
