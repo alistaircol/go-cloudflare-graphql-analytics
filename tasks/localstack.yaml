@@ -4,7 +4,7 @@ version: "3"
 vars:
   LOCALSTACK: docker exec localstack
   LAMBDA_NAME: cloudflare-analytics
-  LAMBDA_ZIP_FILE: /tmp/cloudflare-analytics/main.zip
+  LAMBDA_ZIP_FILE: /tmp/cloudflare-analytics/src/main.zip
   LAMBDA_ENVIRONMENT:
     sh: |-
       cat <<"EOF" | jq --compact-output .
@@ -31,13 +31,15 @@ tasks:
     - docker exec -it localstack /bin/bash
 
   setup:
-    desc: Setup local infrastructure
+    desc: Setup local infrastructure (creates bucket and lambda function)
     cmds:
-    - >-
-      echo "TODO: setup lambda function and an invocation with parameters from eventbridge"
+    - task: create_bucket
+    - task: copy_resources_to_bucket
+    - task: lambda_create_function
+    - task: setup_event_bus
 
   create_bucket:
-    desc: Step 0 - Create bucket which lambda downloads files to
+    desc: Create a bucket which lambda downloads files to
     status:
     - >-
       {{.LOCALSTACK}} awslocal
@@ -51,17 +53,26 @@ tasks:
       create-bucket
       --bucket="{{.AWS_S3_BUCKET}}"
 
+  copy_resources_to_bucket:
+    desc: Copy chartjs resources to bucket
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3
+      cp
+      /tmp/cloudflare-analytics/resources
+      s3://{{.AWS_S3_BUCKET}}
+      --recursive
+
   # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html
   lambda_create_function:
-    desc: Step 0 - Create build and lambda function
+    desc: Create lambda function
     status:
     - >-
       {{.LOCALSTACK}} awslocal
       lambda
       list-functions
       | jq --exit-status -r '.Functions[] | select(.FunctionName == "{{.LAMBDA_NAME}}") | .FunctionArn'
-    aliases:
-    - step0
     cmds:
     - >-
       {{.LOCALSTACK}} awslocal
@@ -74,22 +85,6 @@ tasks:
       --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
       --environment='{{.LAMBDA_ENVIRONMENT}}'
       --role="arn:aws:iam::000000000000:role/lambda"
-
-  update_lambda_function:
-    desc: Update lambda code
-    cmds:
-    - >-
-      {{.LOCALSTACK}} awslocal
-      lambda
-      update-function-code
-      --function-name="{{.LAMBDA_NAME}}"
-      --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
-    - >-
-      {{.LOCALSTACK}} awslocal
-      lambda
-      update-function-configuration
-      --function-name="{{.LAMBDA_NAME}}"
-      --environment='{{.LAMBDA_ENVIRONMENT}}'
 
   setup_event_bus:
     vars:
@@ -137,4 +132,18 @@ tasks:
       --rule="analytics-lambda-invocation"
       --targets='{{.EVENT_TARGETS}}'
 
-  # TODO: task to copy resources/ into the data bucket locally, and open website hosting for it
+  update_lambda_function:
+    desc: Update lambda code
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      update-function-code
+      --function-name="{{.LAMBDA_NAME}}"
+      --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      update-function-configuration
+      --function-name="{{.LAMBDA_NAME}}"
+      --environment='{{.LAMBDA_ENVIRONMENT}}'

@@ -12,7 +12,7 @@ services:
     - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
     - localstack_data:/var/lib/localstack
-    - ./src:/tmp/cloudflare-analytics
+    - ./:/tmp/cloudflare-analytics
     - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:

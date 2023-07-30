@@ -36,7 +36,7 @@ You should create a programmatic user with the relevant roles to create buckets,
 > You will need to upload the zipped binary to the code bucket, and then re-run the `terraform apply`.
 > It will not be able to create the lambda function because the object will not yet exist in the bucket.
 > e.g.:
-> ` Error: getting S3 Bucket (lambda-ac93uk-cloudflare-analytics) Object (build.zip): NotFound: Not Found`
+> `Error: getting S3 Bucket (lambda-ac93uk-cloudflare-analytics) Object (build.zip): NotFound: Not Found`
 
 From the root of the repository:
 
