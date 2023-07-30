@@ -24,6 +24,11 @@ module "s3_data_bucket" {
   versioning = {
     enabled = false
   }
+
+  website = {
+    index_document = "index.html"
+    error_document = "error.html"
+  }
 }
 
 resource "aws_s3_bucket_policy" "allow_access" {
