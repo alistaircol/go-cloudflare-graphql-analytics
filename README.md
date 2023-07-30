@@ -3,6 +3,12 @@
 ![Chart](https://raw.githubusercontent.com/alistaircol/go-cloudflare-graphql-analytics/main/.github/chart.png)
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
+- [Overview](#overview)
+  - [Local Development](#local-development)
+  - [Production Deployment](#production-deployment)
+
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Overview
