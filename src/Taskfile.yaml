@@ -1,0 +1,41 @@
+---
+version: "3"
+
+vars:
+  GO_BUILD_FLAGS: -ldflags="-s -w" -trimpath -buildmode=pie -buildvcs=false
+
+tasks:
+  default:
+    silent: true
+    cmds:
+    - cmd: task --list --sort=none
+
+  lint:
+    desc: Format go files
+    interactive: true
+    silent: true
+    cmds:
+    - go fmt
+
+  build:
+    desc: Build lambda binary
+    env:
+      GOOS: linux
+      GOARCH: amd64
+    cmds:
+    - go build {{.GO_BUILD_FLAGS}} -o main .
+    - zip main.zip main
+
+  test:
+    desc: Run go tests
+    silent: true
+    cmds:
+    - go test -v .
+
+  coverage:
+    desc: Run go tests and generate coverage report
+    silent: true
+    cmds:
+    - rm coverage.out || true
+    - go test -coverprofile=coverage.out
+    - go tool cover -html=coverage.out -o coverage.html

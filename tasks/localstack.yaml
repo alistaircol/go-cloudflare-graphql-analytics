@@ -1,0 +1,149 @@
+---
+version: "3"
+
+vars:
+  LOCALSTACK: docker exec localstack
+  LAMBDA_NAME: cloudflare-analytics
+  LAMBDA_ZIP_FILE: /tmp/cloudflare-analytics/src/main.zip
+  LAMBDA_ENVIRONMENT:
+    sh: |-
+      cat <<"EOF" | jq --compact-output .
+      {
+        "Variables": {
+          "AWS_ENDPOINT": "http://localstack:4566",
+          "CLOUDFLARE_ZONE": "{{.CLOUDFLARE_ZONE}}",
+          "CLOUDFLARE_EMAIL": "{{.CLOUDFLARE_EMAIL}}",
+          "CLOUDFLARE_TOKEN": "{{.CLOUDFLARE_TOKEN}}",
+          "AWS_S3_BUCKET": "{{.AWS_S3_BUCKET}}",
+          "LOCAL_DEVELOPMENT": "true"
+        }
+      }
+      EOF
+  LAMBDA_EVENT_BUS: default
+  LAMBDA_EVENT_SOURCE: localstack
+  LAMBDA_EVENT_TYPE: analytics
+
+tasks:
+  shell:
+    desc: Shell inside localstack container
+    interactive: true
+    cmds:
+    - docker exec -it localstack /bin/bash
+
+  setup:
+    desc: Setup local infrastructure (creates bucket and lambda function)
+    cmds:
+    - task: create_bucket
+    - task: copy_resources_to_bucket
+    - task: lambda_create_function
+    - task: setup_event_bus
+
+  create_bucket:
+    desc: Create a bucket which lambda downloads files to
+    status:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3api
+      list-buckets
+      | jq --exit-status -r '.Buckets[] | select(.Name == "{{.AWS_S3_BUCKET}}") | .Name'
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3api
+      create-bucket
+      --bucket="{{.AWS_S3_BUCKET}}"
+
+  copy_resources_to_bucket:
+    desc: Copy chartjs resources to bucket
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      s3
+      cp
+      /tmp/cloudflare-analytics/resources
+      s3://{{.AWS_S3_BUCKET}}
+      --recursive
+
+  # https://awscli.amazonaws.com/v2/documentation/api/latest/reference/lambda/create-function.html
+  lambda_create_function:
+    desc: Create lambda function
+    status:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      list-functions
+      | jq --exit-status -r '.Functions[] | select(.FunctionName == "{{.LAMBDA_NAME}}") | .FunctionArn'
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      create-function
+      --function-name="{{.LAMBDA_NAME}}"
+      --runtime="go1.x"
+      --handler="main"
+      --memory-size=128
+      --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
+      --environment='{{.LAMBDA_ENVIRONMENT}}'
+      --role="arn:aws:iam::000000000000:role/lambda"
+
+  setup_event_bus:
+    vars:
+      EVENT_PATTERN:
+        sh: |-
+          cat <<"EOF" | jq --compact-output .
+          {
+            "source": [
+              "{{.LAMBDA_EVENT_SOURCE}}"
+            ],
+            "detail-type": [
+              "{{.LAMBDA_EVENT_TYPE}}"
+            ]
+          }
+          EOF
+      LAMBDA_ARN:
+        sh: >-
+          {{.LOCALSTACK}} awslocal
+          lambda
+          list-functions
+          | jq --exit-status -r '.Functions[] | select(.FunctionName == "{{.LAMBDA_NAME}}") | .FunctionArn'
+      EVENT_TARGETS:
+        sh: |-
+          cat <<"EOF" | jq --compact-output .
+          {
+            "Id": "analytics-lambda",
+            "Arn": "{{.LAMBDA_ARN}}"
+          }
+          EOF
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      events
+      put-rule
+      --event-bus-name="default"
+      --state="ENABLED"
+      --description="Invoke analytics lambda for events on this bus"
+      --name="analytics-lambda-invocation"
+      --event-pattern='{{.EVENT_PATTERN}}'
+    - >-
+      {{.LOCALSTACK}} awslocal
+      events
+      put-targets
+      --event-bus-name="default"
+      --rule="analytics-lambda-invocation"
+      --targets='{{.EVENT_TARGETS}}'
+
+  update_lambda_function:
+    desc: Update lambda code
+    cmds:
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      update-function-code
+      --function-name="{{.LAMBDA_NAME}}"
+      --zip-file="fileb://{{.LAMBDA_ZIP_FILE}}"
+    - >-
+      {{.LOCALSTACK}} awslocal
+      lambda
+      update-function-configuration
+      --function-name="{{.LAMBDA_NAME}}"
+      --environment='{{.LAMBDA_ENVIRONMENT}}'

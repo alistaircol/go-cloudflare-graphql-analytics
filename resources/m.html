@@ -1,21 +1,23 @@
 <html lang="en" style="background: #1d1e20 !important;">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charSet="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
     <title>Ally's Chart</title>
 </head>
 <body class="max-w-4xl py-4">
-<div><canvas id="myChart"></canvas></div>
+<div>
+    <canvas id="myChart"></canvas>
+</div>
 <script>
     let stats = {};
 
     document.onreadystatechange = function () {
         if (document.readyState === "interactive") {
-            fetch('1d.json')
+            fetch('1m.json')
                 .then((response) => response.json())
                 .then((json) => {
-                    stats = json.data.viewer.analytics[0].httpRequests1hGroups;
+                    stats = json.data.viewer.analytics[0].httpRequests1dGroups;
                     console.log(stats);
                 })
                 .then(() => {
@@ -25,7 +27,7 @@
                     let visitors = [];
                     let requests = [];
                     for (let day of stats) {
-                        labels.push(day.dimensions.datetime);
+                        labels.push(day.dimensions.date);
                         visitors.push(day.uniq.uniques);
                         requests.push(day.sum.requests);
                     }
@@ -71,7 +73,7 @@
                                 },
                                 subtitle: {
                                     display: true,
-                                    text: 'Last 24hrs'
+                                    text: 'Last 30 days'
                                 }
                             },
 
@@ -132,7 +134,7 @@
 <script
         src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
         integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA=="
-        crossorigin="anonymous"
+        crossOrigin="anonymous"
         referrerpolicy="no-referrer"
 ></script>
 </html>
