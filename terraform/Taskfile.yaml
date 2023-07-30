@@ -31,7 +31,6 @@ tasks:
     cmds:
     - terraform console {{.CLI_ARGS}}
 
-  # TODO: upload resources to bucket for viewing charts
   upload_to_code_bucket:
     desc: Uploads zipped binary to the code bucket
     vars:
@@ -58,3 +57,16 @@ tasks:
       lambda
       update-function-configuration
       --function-name="{{.FUNCTION_NAME}}"
+
+  upload_resources_to_data_bucket:
+    desc: Upload chart resources to data bucket
+    cmds:
+    - >-
+      aws
+      --profile={{.AWS_PROFILE}}
+      s3
+      cp
+      ../resources
+      s3://{{.DATA_BUCKET_NAME}}
+      --recursive
+      {{.CLI_ARGS}}
