@@ -32,6 +32,14 @@ jobs:
           ${{ steps.root.outputs.tasks }}
           ```
 
+    - name: Commit updated README.md if applicable
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_user_email: ${github.actor}@users.noreply.github.com
+        commit_message: |
+          chore(docs): Update task documentation section
+        commit_options: --no-verify
+
     - uses: technote-space/toc-generator@v4
       with:
         TOC_TITLE: ""
