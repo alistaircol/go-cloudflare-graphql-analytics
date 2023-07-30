@@ -58,6 +58,34 @@ You can then view the chart at, e.g. `http://analytics-bucket.s3.localhost.local
 ---
 
 <!-- task-start -->
+<!-- DO NOT EDIT THIS SECTION - IT IS UPDATED BY A GITHUB WORKFLOW -->
+```
+task: Available tasks for this project:
+* go:lint:                                         Format go files
+* go:build:                                        Build lambda binary
+* go:test:                                         Run go tests
+* go:coverage:                                     Run go tests and generate coverage report
+* localstack:shell:                                Shell inside localstack container
+* localstack:setup:                                Setup local infrastructure (creates bucket and lambda function)
+* localstack:create_bucket:                        Create a bucket which lambda downloads files to
+* localstack:copy_resources_to_bucket:             Copy chartjs resources to bucket
+* localstack:lambda_create_function:               Create lambda function
+* localstack:update_lambda_function:               Update lambda code
+* event:day:                                       Dispatch Eventbridge notification to invoke lambda to gather daily stats
+* event:week:                                      Dispatch Eventbridge notification to invoke lambda to gather weekly stats
+* event:month:                                     Dispatch Eventbridge notification to invoke lambda to gather monthly stats
+* s3:list:                                         List objects in the bucket
+* s3:get:                                          Get the payload file from the bucket (e.g. `task s3:get -- filename.json`)
+* s3:delete:                                       Delete all objects in the bucket
+* terraform:init:                                  Run `terraform init`
+* terraform:fmt:                                   Run `terraform fmt`
+* terraform:plan:                                  Run `terraform plan`
+* terraform:apply:                                 Run `terraform apply`
+* terraform:console:                               Run `terraform console`
+* terraform:upload_to_code_bucket:                 Uploads zipped binary to the code bucket
+* terraform:update_lambda_code:                    Upload new binary and re-fresh lambda
+* terraform:upload_resources_to_data_bucket:       Upload chart resources to data bucket
+```
 <!-- task-end -->
 
 ## Production Deployment
